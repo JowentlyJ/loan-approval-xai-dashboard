@@ -1,10 +1,10 @@
-streamlit      - runs the dashboard interface
-pandas         - loads and manages the loan dataset
-numpy          - supports numerical calculations
-scikit-learn   - loads and runs the trained machine learning pipeline (scikit-learn==1.5.2)
-shap           - creates explainable AI model explanations
-plotly         - creates interactive charts
-joblib         - loads the saved model file
-xgboost        - supports the XGBoost model candidate used during training
-dice-ml        - supports the original counterfactual/what-if functionality
-matplotlib     - supports plotting where needed
+streamlit
+pandas
+numpy
+scikit-learn==1.5.2
+shap
+plotly
+joblib
+xgboost
+dice-ml
+matplotlib
