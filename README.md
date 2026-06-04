@@ -13,6 +13,17 @@ A Streamlit dashboard that uses machine learning and explainable AI to support l
 - Sidebar search and filters
 - Educational comments and docstrings for code review
 
+## Dataset
+
+This project uses a loan approval prediction dataset based on the example dataset used in the GeeksforGeeks article **“Loan Approval Prediction using Machine Learning.”** The dataset contains historical loan application records with applicant-related features such as gender, marital status, number of dependents, education level, self-employment status, applicant income, co-applicant income, loan amount, loan amount term, credit history, property area, and loan approval status.
+
+In this project, the dataset is used to train and evaluate a machine learning model that predicts whether a loan application is likely to be approved. The same dataset is also used in the dashboard to support model explanations, similar-case comparison, and what-if scenario analysis.
+
+Dataset/article source:  
+https://www.geeksforgeeks.org/machine-learning/loan-approval-prediction-using-machine-learning/
+
+> Note: This dataset is used for educational and demonstration purposes. The dashboard should be treated as a decision-support prototype, not as a production-ready financial approval system.
+
 ## Tech Stack
 
 - Python
