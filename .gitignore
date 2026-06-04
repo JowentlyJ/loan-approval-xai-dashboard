@@ -1,0 +1,31 @@
+# Local AI/tooling folders
+.claude/
+.playwright-mcp/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+
+# macOS
+.DS_Store
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Duplicate/generated folders not needed for submission
+all_commented_files/
+outputs/
+
+# Local environments
+.venv/
+venv/
+env/
+
+# Streamlit secrets
+.streamlit/secrets.toml
+
+# Logs
+*.log
