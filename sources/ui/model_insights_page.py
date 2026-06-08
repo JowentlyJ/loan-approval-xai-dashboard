@@ -111,13 +111,13 @@ def render_model_insights_page(
 
     with st.expander("How to read these fairness metrics"):
         st.markdown(
-            "**Demographic Parity Difference** — compares approval rates between groups. "
+            "**Demographic Parity Difference:** compares approval rates between groups. "
             "Lower is better. A value of 0 means the model approves loans at the same rate "
             "for all groups.\n\n"
-            "**Equal Opportunity Difference** — compares correct approval rates between groups "
+            "**Equal Opportunity Difference:** compares correct approval rates between groups "
             "(i.e. how often qualified applicants are approved). Lower is better. A value of 0 "
             "means qualified applicants are equally likely to be approved regardless of group.\n\n"
-            "**Disparate Impact Ratio** (where shown) — compares approval rates between groups "
+            "**Disparate Impact Ratio** (where shown): compares approval rates between groups "
             "as a ratio. Values closer to 1.0 are generally better. A value below 0.8 is often "
             "flagged as a concern in fairness guidelines."
         )
