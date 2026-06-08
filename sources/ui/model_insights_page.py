@@ -103,22 +103,214 @@ def render_model_insights_page(
     # checks whether the CSV exists before trying to display it.
     st.subheader("Fairness Metrics")
     st.write(
-        "These metrics provide a high-level view of fairness-related model behavior "
-        "across applicant groups. They are intended for monitoring and review, not as "
-        "a final legal or regulatory judgement."
+        "Fairness metrics show whether the model behaves differently across applicant groups. "
+        "Smaller differences are generally better because they suggest the model is more "
+        "consistent across groups. These metrics are intended for monitoring and review, "
+        "not as a final legal or regulatory judgement."
     )
 
-    _fairness_path = Path(__file__).resolve().parents[2] / "outputs" / "fairness_metrics.csv"
+    with st.expander("How to read these fairness metrics"):
+        st.markdown(
+            "**Demographic Parity Difference** — compares approval rates between groups. "
+            "Lower is better. A value of 0 means the model approves loans at the same rate "
+            "for all groups.\n\n"
+            "**Equal Opportunity Difference** — compares correct approval rates between groups "
+            "(i.e. how often qualified applicants are approved). Lower is better. A value of 0 "
+            "means qualified applicants are equally likely to be approved regardless of group.\n\n"
+            "**Disparate Impact Ratio** (where shown) — compares approval rates between groups "
+            "as a ratio. Values closer to 1.0 are generally better. A value below 0.8 is often "
+            "flagged as a concern in fairness guidelines."
+        )
 
-    if _fairness_path.exists():
-        fairness_df = pd.read_csv(_fairness_path)
-        numeric_cols = fairness_df.select_dtypes(include="number").columns
-        fairness_df[numeric_cols] = fairness_df[numeric_cols].round(3)
-        st.dataframe(fairness_df, use_container_width=True, hide_index=True)
-    else:
+    _fairness_path = Path(__file__).resolve().parents[2] / "outputs" / "fairness_metrics.csv"
+    _audit_path = Path(__file__).resolve().parents[2] / "outputs" / "fairness_audit_report.csv"
+
+    if not _fairness_path.exists():
         st.warning(
             "Fairness metrics file not found. Run train.py to generate fairness_metrics.csv."
         )
+    else:
+        import plotly.graph_objects as go
+
+        fairness_df = pd.read_csv(_fairness_path)
+
+        # ── Model selector ─────────────────────────────────────────────────
+        model_col = "Model" if "Model" in fairness_df.columns else (
+            "Model_Name" if "Model_Name" in fairness_df.columns else None
+        )
+
+        if model_col is not None and fairness_df[model_col].nunique() > 1:
+            available_models = fairness_df[model_col].unique().tolist()
+            default_model = (
+                "Logistic Regression"
+                if "Logistic Regression" in available_models
+                else available_models[0]
+            )
+            selected_model = st.selectbox(
+                "Select model for fairness view",
+                options=available_models,
+                index=available_models.index(default_model),
+            )
+        else:
+            selected_model = (
+                fairness_df[model_col].iloc[0] if model_col is not None else None
+            )
+
+        model_fairness_df = (
+            fairness_df[fairness_df[model_col] == selected_model].copy()
+            if model_col is not None
+            else fairness_df.copy()
+        )
+
+        # ── Fairness gap chart ─────────────────────────────────────────────
+        feat_col = (
+            "Sensitive_Feature"
+            if "Sensitive_Feature" in model_fairness_df.columns
+            else None
+        )
+        dpd_col = next(
+            (c for c in ["Demographic_Parity_Difference", "Demographic_Parity_Diff"]
+             if c in model_fairness_df.columns),
+            None,
+        )
+        eod_col = next(
+            (c for c in ["Equal_Opportunity_Difference", "Equal_Opportunity_Diff"]
+             if c in model_fairness_df.columns),
+            None,
+        )
+
+        if feat_col and (dpd_col or eod_col):
+            fig = go.Figure()
+
+            if dpd_col:
+                fig.add_trace(go.Bar(
+                    name="Demographic Parity Difference",
+                    x=model_fairness_df[feat_col],
+                    y=model_fairness_df[dpd_col].abs(),
+                    marker_color="#4C78A8",
+                ))
+            if eod_col:
+                fig.add_trace(go.Bar(
+                    name="Equal Opportunity Difference",
+                    x=model_fairness_df[feat_col],
+                    y=model_fairness_df[eod_col].abs(),
+                    marker_color="#F58518",
+                ))
+
+            # Reference lines at fairness gap thresholds
+            fig.add_hline(
+                y=0.05, line_dash="dot", line_color="green",
+                annotation_text="Low/Medium threshold (0.05)",
+                annotation_position="top right",
+            )
+            fig.add_hline(
+                y=0.15, line_dash="dot", line_color="red",
+                annotation_text="Medium/High threshold (0.15)",
+                annotation_position="top right",
+            )
+
+            fig.update_layout(
+                barmode="group",
+                title=f"Fairness Gaps by Sensitive Feature — {selected_model}",
+                xaxis_title="Sensitive Feature",
+                yaxis_title="Fairness Gap (absolute value)",
+                legend_title="Metric",
+                yaxis_range=[0, max(
+                    model_fairness_df[dpd_col].abs().max() if dpd_col else 0,
+                    model_fairness_df[eod_col].abs().max() if eod_col else 0,
+                    0.20,
+                ) * 1.15],
+                height=400,
+            )
+            st.plotly_chart(fig, use_container_width=True)
+        else:
+            st.warning("Could not render fairness chart: expected columns not found.")
+
+        # ── Risk-label table ───────────────────────────────────────────────
+        def _gap_label(val):
+            try:
+                v = abs(float(val))
+            except (TypeError, ValueError):
+                return "—"
+            if v < 0.05:
+                return "Low gap"
+            if v < 0.15:
+                return "Medium gap"
+            return "High gap"
+
+        display_df = model_fairness_df.copy()
+        numeric_display_cols = display_df.select_dtypes(include="number").columns
+        display_df[numeric_display_cols] = display_df[numeric_display_cols].round(3)
+
+        if dpd_col:
+            display_df["Demographic Parity Level"] = model_fairness_df[dpd_col].apply(_gap_label)
+        if eod_col:
+            display_df["Equal Opportunity Level"] = model_fairness_df[eod_col].apply(_gap_label)
+
+        # Drop raw group-rate columns from the summary table (shown separately below)
+        summary_cols = [
+            c for c in display_df.columns
+            if c not in ("Approval_Rates_By_Group", "Recall_Rates_By_Group")
+        ]
+        st.dataframe(display_df[summary_cols], use_container_width=True, hide_index=True)
+
+        # ── Full detailed table ────────────────────────────────────────────
+        full_display = fairness_df.copy()
+        full_numeric = full_display.select_dtypes(include="number").columns
+        full_display[full_numeric] = full_display[full_numeric].round(3)
+        with st.expander("Show full fairness metrics table (all models)"):
+            st.dataframe(full_display, use_container_width=True, hide_index=True)
+
+        # ── Detailed group rates ───────────────────────────────────────────
+        has_group_cols = (
+            "Approval_Rates_By_Group" in model_fairness_df.columns
+            or "Recall_Rates_By_Group" in model_fairness_df.columns
+        )
+        audit_exists = _audit_path.exists()
+
+        if has_group_cols or audit_exists:
+            with st.expander("Detailed group rates"):
+                st.caption(
+                    "These tables show approval and recall rates broken down by group within "
+                    "each sensitive feature. This is more technical detail for reviewers who "
+                    "want to see the underlying numbers behind the fairness gaps above."
+                )
+                if has_group_cols and feat_col:
+                    for _, row in model_fairness_df.iterrows():
+                        feature_label = row.get(feat_col, "")
+                        st.markdown(f"**{feature_label}**")
+                        rate_rows = []
+                        for rate_col, label in [
+                            ("Approval_Rates_By_Group", "Approval Rate"),
+                            ("Recall_Rates_By_Group", "Recall Rate"),
+                        ]:
+                            if rate_col in row and pd.notna(row[rate_col]):
+                                try:
+                                    rates = eval(str(row[rate_col]))  # noqa: S307 — trusted CSV output
+                                    for group, val in rates.items():
+                                        rate_rows.append({
+                                            "Group": group,
+                                            label: f"{val:.1%}",
+                                        })
+                                except Exception:
+                                    pass
+                        if rate_rows:
+                            rates_display = pd.DataFrame(rate_rows)
+                            if len(rates_display.columns) > 2:
+                                # merge approval + recall into one table per feature
+                                rates_display = (
+                                    rates_display.groupby("Group")
+                                    .first()
+                                    .reset_index()
+                                )
+                            st.dataframe(rates_display, use_container_width=True, hide_index=True)
+
+                if audit_exists:
+                    audit_df = pd.read_csv(_audit_path)
+                    audit_numeric = audit_df.select_dtypes(include="number").columns
+                    audit_df[audit_numeric] = audit_df[audit_numeric].round(4)
+                    st.markdown("**Overall audit summary (all models)**")
+                    st.dataframe(audit_df, use_container_width=True, hide_index=True)
 
     st.subheader("Dataset Summary")
 
