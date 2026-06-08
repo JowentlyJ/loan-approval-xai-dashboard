@@ -15,6 +15,8 @@ This page does not show per-applicant data. For individual explanations,
 the user should navigate to the Loan Decision page.
 """
 import os
+from pathlib import Path
+
 import pandas as pd
 import streamlit as st
 
@@ -95,6 +97,28 @@ def render_model_insights_page(
                 col3.empty()
 
             st.dataframe(comparison_df, use_container_width=True, hide_index=True)
+
+    # ── Fairness Metrics ───────────────────────────────────────────────────
+    # The fairness metrics are generated during training, so the dashboard
+    # checks whether the CSV exists before trying to display it.
+    st.subheader("Fairness Metrics")
+    st.write(
+        "These metrics provide a high-level view of fairness-related model behavior "
+        "across applicant groups. They are intended for monitoring and review, not as "
+        "a final legal or regulatory judgement."
+    )
+
+    _fairness_path = Path(__file__).resolve().parents[2] / "outputs" / "fairness_metrics.csv"
+
+    if _fairness_path.exists():
+        fairness_df = pd.read_csv(_fairness_path)
+        numeric_cols = fairness_df.select_dtypes(include="number").columns
+        fairness_df[numeric_cols] = fairness_df[numeric_cols].round(3)
+        st.dataframe(fairness_df, use_container_width=True, hide_index=True)
+    else:
+        st.warning(
+            "Fairness metrics file not found. Run train.py to generate fairness_metrics.csv."
+        )
 
     st.subheader("Dataset Summary")
 
