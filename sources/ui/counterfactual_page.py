@@ -83,8 +83,8 @@ def _explain_scenario(row: "pd.Series", orig_prob: float) -> dict:
     is_review = new_decision == "Manual Review"
 
     review_note = (
-        " This improvement alone is not enough for automatic approval — "
-        "additional supporting factors may be needed to reach a full Approve decision."
+        " This improvement alone is not enough for automatic approval. "
+        "Additional supporting factors may be needed to reach a full Approve decision."
         if is_review else ""
     )
 
@@ -129,8 +129,8 @@ def _explain_scenario(row: "pd.Series", orig_prob: float) -> dict:
             f"raises the approval probability from {orig_prob:.1%} to {new_prob:.1%} "
             f"(+{improvement_pp:.1f} pp), resulting in a **{new_decision}** decision. "
             f"This is typically the strongest single change available. "
-            f"Improving credit history takes time — it usually requires resolving outstanding "
-            f"debts and maintaining a clean repayment record — but it has by far the greatest impact on approval."
+            f"Improving credit history takes time: it usually requires resolving outstanding "
+            f"debts and maintaining a clean repayment record. It has by far the greatest impact on approval."
         )
 
     elif feature == "ApplicantIncome":
@@ -220,7 +220,7 @@ def render_counterfactual_page(
     with right_col:
         if global_idx not in model_df.index:
             st.subheader("Current Prediction")
-            st.error("❌ Applicant has missing values — counterfactuals unavailable.")
+            st.error("❌ Applicant has missing values. Counterfactuals unavailable.")
             return
 
         applicant_model_row = model_df.loc[[global_idx]].drop(columns=["Loan_Status"], errors="ignore")
@@ -236,7 +236,7 @@ def render_counterfactual_page(
             return
 
         if decision == "Manual Review":
-            st.info("In Manual Review — showing scenarios that could reach full Approval.")
+            st.info("In Manual Review: showing scenarios that could reach full Approval.")
 
         run_scenarios = st.button("Generate What-If Scenarios", use_container_width=True)
 
@@ -305,7 +305,7 @@ def render_counterfactual_page(
     st.subheader("Summary")
     best = suggestions.iloc[0]
     st.info(
-        f"**Strongest improvement:** *{best['Scenario']}* — "
+        f"**Strongest improvement:** *{best['Scenario']}*: "
         f"changing **{best['Feature Changed']}** from `{best['Original Value']}` "
         f"to `{best['Suggested Value']}` raises the approval probability from "
         f"**{orig_prob:.1%}** to **{best['New Probability']:.1%}** "

@@ -211,7 +211,7 @@ def render_model_insights_page(
 
             fig.update_layout(
                 barmode="group",
-                title=f"Fairness Gaps by Sensitive Feature — {selected_model}",
+                title=f"Fairness Gaps by Sensitive Feature: {selected_model}",
                 xaxis_title="Sensitive Feature",
                 yaxis_title="Fairness Gap (absolute value)",
                 legend_title="Metric",
@@ -379,7 +379,7 @@ def render_model_insights_page(
                     "that value pushed the prediction toward approval (right) or rejection (left).\n\n"
                     "This is a **global** view of model behaviour. To see how a specific applicant's "
                     "profile was evaluated, open the **Loan Decision** page and scroll to the "
-                    "*Why This Decision?* section — that chart explains a single applicant's prediction."
+                    "*Why This Decision?* section. That chart explains a single applicant's prediction."
                 )
         with shap_right:
             st.image(global_shap_image, caption="Global SHAP feature importance")

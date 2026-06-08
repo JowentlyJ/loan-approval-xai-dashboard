@@ -93,7 +93,7 @@ def _explain_shap_chart(
         "This chart shows which profile details influenced the model's decision. "
         "**Green bars** represent features that increased the chance of approval; "
         "**red bars** represent features that worked against it. "
-        "Longer bars indicate stronger influence — the SHAP value measures "
+        "Longer bars indicate stronger influence. The SHAP value measures "
         "direction and strength of each feature's push, not the final probability directly."
     )
 
