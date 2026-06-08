@@ -2,7 +2,7 @@
 
 A Streamlit dashboard that uses machine learning and explainable AI to support loan approval analysis through predictions, SHAP explanations, similar-case comparison, fairness metrics, and what-if decision-support scenarios.
 
-**Live demo:** [Open the Loan Approval XAI Dashboard](https://loan-approval-xai-dashboard-jjush6b8w5f5yjcz6zzkt7.streamlit.app/)
+**Live demo:** [Loan Approval XAI Dashboard](https://loan-approval-xai-dashboard-jjush6b8w5f5yjcz6zzkt7.streamlit.app/)
 ---
 
 ## Metadata

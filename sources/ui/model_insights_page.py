@@ -51,20 +51,50 @@ def render_model_insights_page(
     if comparison_df is None or comparison_df.empty:
         st.warning("Model comparison results not found. Run train.py first.")
     else:
-        columns = comparison_df.columns
+        columns = comparison_df.columns.tolist()
+
         model_col = "Model_Name" if "Model_Name" in columns else "Model"
-        auc_col = "CV_Mean_ROC_AUC" if "CV_Mean_ROC_AUC" in columns else "ROC_AUC"
-        acc_col = "Accuracy" if "Accuracy" in columns else columns[2]
 
-        sorted_df = comparison_df.sort_values(by=auc_col, ascending=False)
-        best_model = sorted_df.iloc[0]
+        if "CV_Mean_ROC_AUC" in columns:
+            auc_col = "CV_Mean_ROC_AUC"
+        elif "ROC_AUC" in columns:
+            auc_col = "ROC_AUC"
+        elif "AUC" in columns:
+            auc_col = "AUC"
+        else:
+            auc_col = None
 
-        col1, col2, col3 = st.columns(3)
-        col1.metric("Best Model", str(best_model[model_col]).replace("_", " "))
-        col2.metric("Best Accuracy", f"{float(best_model[acc_col]):.2%}")
-        col3.metric("Best ROC-AUC", f"{float(best_model[auc_col]):.4f}")
+        if "Accuracy" in columns:
+            acc_col = "Accuracy"
+        elif auc_col is not None:
+            acc_col = auc_col
+        else:
+            numeric_cols = comparison_df.select_dtypes(include="number").columns.tolist()
+            acc_col = numeric_cols[0] if numeric_cols else None
 
-        st.dataframe(comparison_df, use_container_width=True, hide_index=True)
+        if auc_col is None and acc_col is None:
+            st.warning(
+                "No accuracy or ROC-AUC column was found in the model comparison data. "
+                f"Available columns: {', '.join(columns)}"
+            )
+            st.dataframe(comparison_df, use_container_width=True, hide_index=True)
+        else:
+            sort_col = auc_col if auc_col is not None else acc_col
+            sorted_df = comparison_df.sort_values(by=sort_col, ascending=False)
+            best_model = sorted_df.iloc[0]
+
+            col1, col2, col3 = st.columns(3)
+            col1.metric("Best Model", str(best_model[model_col]).replace("_", " "))
+            if acc_col is not None:
+                col2.metric("Best Accuracy", f"{float(best_model[acc_col]):.2%}")
+            else:
+                col2.empty()
+            if auc_col is not None:
+                col3.metric("Best ROC-AUC", f"{float(best_model[auc_col]):.4f}")
+            else:
+                col3.empty()
+
+            st.dataframe(comparison_df, use_container_width=True, hide_index=True)
 
     st.subheader("Dataset Summary")
 
