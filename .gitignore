@@ -17,7 +17,7 @@ __pycache__/
 
 # Duplicate/generated folders not needed for submission
 all_commented_files/
-outputs/
+
 
 # Local environments
 .venv/

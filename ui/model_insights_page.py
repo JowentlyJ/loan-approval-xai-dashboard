@@ -20,6 +20,8 @@ from pathlib import Path
 import pandas as pd
 import streamlit as st
 
+from config import OUTPUT_DIR
+
 
 def render_model_insights_page(
     model_df,
@@ -122,8 +124,8 @@ def render_model_insights_page(
             "flagged as a concern in fairness guidelines."
         )
 
-    _fairness_path = Path(__file__).resolve().parents[2] / "outputs" / "fairness_metrics.csv"
-    _audit_path = Path(__file__).resolve().parents[2] / "outputs" / "fairness_audit_report.csv"
+    _fairness_path = Path(OUTPUT_DIR) / "fairness_metrics.csv"
+    _audit_path = Path(OUTPUT_DIR) / "fairness_audit_report.csv"
 
     if not _fairness_path.exists():
         st.warning(

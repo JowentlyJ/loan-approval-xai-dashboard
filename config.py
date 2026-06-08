@@ -7,9 +7,10 @@ that reads data or loads the model.
 """
 import os
 
-# Locate the project root by going two levels up from this file's location.
-# This makes every path work regardless of which directory the terminal is in.
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+# Locate the project root from this file's location.
+# This makes every path work when the data, models, outputs, services, and ui folders
+# are inside the same project folder as config.py.
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 # Path to the raw loan dataset CSV used for loading applicant records.
 DATA_PATH = os.path.join(BASE_DIR, "data", "LoanApprovalPrediction.csv")
