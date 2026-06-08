@@ -1,6 +1,6 @@
 # Loan Approval XAI Dashboard
 
-A Streamlit dashboard that uses machine learning and explainable AI to support loan approval analysis through predictions, SHAP explanations, similar-case comparison, fairness metrics, and what-if decision-support scenarios.
+A Streamlit dashboard that uses machine learning and explainable AI (XAI) to support loan approval analysis through predictions, feature contribution explanations (SHAP), similar-case comparison, fairness metrics, and what-if decision-support scenarios.
 
 **Live demo:** [Loan Approval XAI Dashboard](https://loan-approval-xai-dashboard-jjush6b8w5f5yjcz6zzkt7.streamlit.app/)
 ---
@@ -38,11 +38,11 @@ The goal is not to automate final loan approval decisions. Instead, the dashboar
 The system combines:
 
 * Machine-learning prediction
-* SHAP-based explanation
+* Feature contribution explanation (SHAP)
 * Similar historical case comparison
 * What-if / counterfactual scenario exploration
 * Fairness evaluation
-* Human-in-the-Loop decision support
+* Human-in-the-loop decision support
 
 ---
 
@@ -50,7 +50,7 @@ The system combines:
 
 * Loan approval prediction for selected applications
 * Approval probability and decision label
-* SHAP-based explanation of individual model decisions
+* Feature contribution explanation (SHAP) of individual model decisions
 * Global model insights
 * Similar historical case comparison
 * What-if / counterfactual scenario suggestions
@@ -118,7 +118,7 @@ This imbalance is important because the model may become better at predicting ap
 
 Four machine-learning models were compared:
 
-| Model               | Initial Accuracy | Initial ROC-AUC |
+| Model               | Initial Accuracy | Initial ROC-AUC score |
 | ------------------- | ---------------: | --------------: |
 | Logistic Regression |           0.7833 |          0.8341 |
 | Random Forest       |           0.8167 |          0.8245 |
@@ -129,7 +129,7 @@ In the first evaluation using a single train/test split, XGBoost performed best 
 
 However, because the dataset is relatively small and imbalanced, a single split can produce unstable results. The evaluation was therefore improved using **5-Fold Stratified Cross-Validation**.
 
-| Model               | Cross-validated Accuracy | Cross-validated ROC-AUC |
+| Model               | Cross-validated Accuracy | Cross-validated ROC-AUC score |
 | ------------------- | -----------------------: | ----------------------: |
 | Logistic Regression |                   80.94% |                  0.7602 |
 | Random Forest       |                   80.43% |                  0.7570 |
@@ -144,9 +144,9 @@ Based on cross-validation, **Logistic Regression** was selected as the final mod
 
 The dashboard includes multiple explanation components.
 
-### SHAP Explanations
+### Feature Contribution Explanations (SHAP)
 
-SHAP is used to show how individual features influenced the model prediction. This helps users understand which variables pushed the decision toward approval or rejection.
+SHAP is a feature contribution analysis method that shows how individual applicant details influenced the model's prediction. Each feature receives a score that indicates how strongly it pushed the outcome toward approval or rejection.
 
 ### Similar Case Comparison
 
@@ -183,7 +183,7 @@ Workflow:
 1. Select or search for a loan application.
 2. Review applicant information.
 3. View the model prediction and approval probability.
-4. Inspect SHAP explanations.
+4. Inspect feature contribution explanations.
 5. Compare similar historical cases.
 6. Explore What-If scenarios.
 7. Record a final decision.
@@ -265,7 +265,7 @@ After starting the Streamlit app, use the sidebar to select or search for a loan
 Users can:
 
 * Inspect the predicted decision
-* Review SHAP explanations
+* Review feature contribution explanations
 * Compare the applicant with similar historical cases
 * Explore What-If scenarios
 * Record a final decision and rationale

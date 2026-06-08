@@ -93,8 +93,8 @@ def _explain_shap_chart(
         "This chart shows which profile details influenced the model's decision. "
         "**Green bars** represent features that increased the chance of approval; "
         "**red bars** represent features that worked against it. "
-        "Longer bars indicate stronger influence. The SHAP value measures "
-        "direction and strength of each feature's push, not the final probability directly."
+        "Longer bars indicate stronger influence. Each score measures "
+        "the direction and strength of that feature's push, not the final probability directly."
     )
 
     if top_pos and top_neg:
@@ -301,7 +301,7 @@ def render_loan_decision_page(
     # whether the old chart functions are present.
     if global_idx in model_df.index:
         st.divider()
-        st.subheader("Why This Decision? (XAI)")
+        st.subheader("Why This Decision? (Model Explanation)")
 
         try:
             explanation_df = get_local_shap_values(model, model_df, global_idx)
@@ -315,7 +315,7 @@ def render_loan_decision_page(
             else:
                 st.dataframe(explanation_df, use_container_width=True, hide_index=True)
         except Exception as error:
-            st.warning("The SHAP explanation could not be generated for this applicant.")
+            st.warning("The model explanation could not be generated for this applicant.")
             st.caption(f"Technical detail: {error}")
 
     st.divider()

@@ -142,9 +142,9 @@ def create_local_shap_bar_chart(explanation_df: pd.DataFrame, max_features: int 
     ))
 
     fig.update_layout(
-        title="Local Feature Risk Contributions (SHAP Attributions)",
-        xaxis_title="SHAP Value (Impact on Model log-odds)",
-        yaxis_title="Profile Attribute Feature Name",
+        title="Local Feature Contributions",
+        xaxis_title="Contribution Score (direction and strength of influence)",
+        yaxis_title="Applicant Profile Feature",
         margin=dict(l=20, r=20, t=40, b=20),
         height=400,
         template="plotly_white"
@@ -177,8 +177,8 @@ def plot_global_feature_importance(global_importance_df: pd.DataFrame, top_n: in
     ))
 
     fig.update_layout(
-        title="Macro Feature Importance (Mean Absolute SHAP Impact)",
-        xaxis_title="Mean |SHAP Value| (Average Magnitude of Impact)",
+        title="Overall Feature Importance (Average Impact Score)",
+        xaxis_title="Average Impact Score",
         yaxis_title="Feature Name",
         margin=dict(l=20, r=20, t=40, b=20),
         height=450,

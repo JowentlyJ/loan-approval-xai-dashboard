@@ -76,7 +76,7 @@ def render_model_insights_page(
 
         if auc_col is None and acc_col is None:
             st.warning(
-                "No accuracy or ROC-AUC column was found in the model comparison data. "
+                "No accuracy or ranking score (ROC-AUC) column was found in the model comparison data. "
                 f"Available columns: {', '.join(columns)}"
             )
             st.dataframe(comparison_df, use_container_width=True, hide_index=True)
@@ -92,7 +92,7 @@ def render_model_insights_page(
             else:
                 col2.empty()
             if auc_col is not None:
-                col3.metric("Best ROC-AUC", f"{float(best_model[auc_col]):.4f}")
+                col3.metric("Best Ranking Score (ROC-AUC)", f"{float(best_model[auc_col]):.4f}")
             else:
                 col3.empty()
 
@@ -364,7 +364,7 @@ def render_model_insights_page(
         st.caption(f"Global weights tracking unavailable: {e}")
 
     if os.path.exists(global_shap_image):
-        st.subheader("Global SHAP Summary Plot")
+        st.subheader("Global Feature Importance Summary")
         # The explanation sits beside the chart so reviewers can read the guidance
         # while looking at the SHAP summary plot without scrolling up and down.
         shap_left, shap_right = st.columns([1, 2.2])
@@ -382,6 +382,6 @@ def render_model_insights_page(
                     "*Why This Decision?* section. That chart explains a single applicant's prediction."
                 )
         with shap_right:
-            st.image(global_shap_image, caption="Global SHAP feature importance")
+            st.image(global_shap_image, caption="Overall feature importance across all applicants")
     else:
         st.info("Global SHAP summary image not found. Run your explainability script first.")
