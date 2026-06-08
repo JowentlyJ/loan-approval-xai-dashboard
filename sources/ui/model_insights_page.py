@@ -313,77 +313,31 @@ def render_model_insights_page(
                     st.dataframe(audit_df, use_container_width=True, hide_index=True)
 
     st.subheader("Dataset Summary")
-    st.write(
-        "This section gives a quick overview of the dataset used by the dashboard, "
-        "including the approval/rejection balance and the types of features used by the model."
+
+    target_counts = model_df["Loan_Status"].value_counts().rename(
+        index={1: "Approved", 0: "Rejected"}
     )
 
-    # The dataset summary charts help reviewers quickly understand class balance
-    # and feature types before interpreting model results.
-    import plotly.graph_objects as _go
+    target_percent = (
+        model_df["Loan_Status"].value_counts(normalize=True) * 100
+    ).rename(
+        index={1: "Approved", 0: "Rejected"}
+    )
 
-    # ── Target Distribution ────────────────────────────────────────────────
-    st.write("**Target Distribution**")
+    summary_col1, summary_col2 = st.columns(2)
 
-    if "Loan_Status" not in model_df.columns or model_df.empty:
-        st.warning("Loan_Status column not found or dataset is empty.")
-    else:
-        try:
-            target_counts = model_df["Loan_Status"].value_counts().rename(
-                index={1: "Approved", 0: "Rejected"}
-            )
-            target_percent = (
-                model_df["Loan_Status"].value_counts(normalize=True) * 100
-            ).rename(index={1: "Approved", 0: "Rejected"})
+    with summary_col1:
+        st.write("Target Distribution")
+        target_summary = pd.DataFrame(
+            {
+                "Count": target_counts,
+                "Percentage": target_percent.round(2).astype(str) + "%",
+            }
+        )
+        st.dataframe(target_summary, use_container_width=True)
 
-            dist_chart_col, dist_table_col = st.columns(2)
-
-            with dist_chart_col:
-                _labels = target_counts.index.tolist()
-                _counts = target_counts.values.tolist()
-                _pcts = [target_percent.get(lbl, 0) for lbl in _labels]
-                _colors = ["#2ECC71" if lbl == "Approved" else "#E74C3C" for lbl in _labels]
-
-                _fig_dist = _go.Figure(
-                    _go.Bar(
-                        x=_labels,
-                        y=_counts,
-                        marker_color=_colors,
-                        text=[f"{p:.1f}%" for p in _pcts],
-                        textposition="outside",
-                        hovertemplate="%{x}: %{y} applicants (%{text})<extra></extra>",
-                    )
-                )
-                _fig_dist.update_layout(
-                    xaxis_title="Loan Status",
-                    yaxis_title="Count",
-                    height=320,
-                    margin=dict(t=30, b=40),
-                    showlegend=False,
-                )
-                st.plotly_chart(_fig_dist, use_container_width=True)
-
-            with dist_table_col:
-                target_summary = pd.DataFrame(
-                    {
-                        "Count": target_counts,
-                        "Percentage": target_percent.round(2).astype(str) + "%",
-                    }
-                )
-                st.dataframe(target_summary, use_container_width=True)
-
-        except Exception as _e:
-            st.warning(f"Could not render Target Distribution chart: {_e}")
-
-    # ── Feature Groups ─────────────────────────────────────────────────────
-    st.write("**Feature Groups**")
-
-    try:
-        if model_df.empty or "Loan_Status" not in model_df.columns:
-            feature_df = model_df
-        else:
-            feature_df = model_df.drop(columns=["Loan_Status"])
-
+    with summary_col2:
+        feature_df = model_df.drop(columns=["Loan_Status"])
         categorical_cols = feature_df.select_dtypes(
             include=["object", "category"]
         ).columns.tolist()
@@ -391,44 +345,9 @@ def render_model_insights_page(
             include=["int64", "float64"]
         ).columns.tolist()
 
-        feat_chart_col, feat_info_col = st.columns(2)
-
-        with feat_chart_col:
-            _feat_labels = ["Numeric", "Categorical"]
-            _feat_counts = [len(numeric_cols), len(categorical_cols)]
-            _feat_colors = ["#4C78A8", "#F58518"]
-
-            _fig_feat = _go.Figure(
-                _go.Bar(
-                    x=_feat_labels,
-                    y=_feat_counts,
-                    marker_color=_feat_colors,
-                    text=_feat_counts,
-                    textposition="outside",
-                    hovertemplate="%{x} features: %{y}<extra></extra>",
-                )
-            )
-            _fig_feat.update_layout(
-                xaxis_title="Feature Type",
-                yaxis_title="Count",
-                height=320,
-                margin=dict(t=30, b=40),
-                showlegend=False,
-            )
-            st.plotly_chart(_fig_feat, use_container_width=True)
-
-        with feat_info_col:
-            if numeric_cols:
-                st.info(f"Numeric columns ({len(numeric_cols)}): {', '.join(numeric_cols)}")
-            else:
-                st.info("No numeric columns found.")
-            if categorical_cols:
-                st.info(f"Categorical columns ({len(categorical_cols)}): {', '.join(categorical_cols)}")
-            else:
-                st.info("No categorical columns found.")
-
-    except Exception as _e:
-        st.warning(f"Could not render Feature Groups chart: {_e}")
+        st.write("Feature Groups")
+        st.info(f"Numeric columns ({len(numeric_cols)}): {', '.join(numeric_cols)}")
+        st.info(f"Categorical columns ({len(categorical_cols)}): {', '.join(categorical_cols)}")
 
     # ── Global Feature Importance ──────────────────────────────────────────
     # get_top_global_features_df() calls calculate_global_shap_importance(),
