@@ -22,8 +22,10 @@ import plotly.graph_objects as go
 import streamlit as st
 
 # =====================================================================
-# SECTION 1: LOCAL SINGLE-ROW SHAP ATTRIBUTION EXPLAINER
+# SECTION 1: Calculate SHAP values for a single applicant
 # =====================================================================
+# This section computes which features pushed one applicant's prediction
+# toward approval or rejection, and by how much.
 
 def get_local_shap_values(_model, model_df: pd.DataFrame, selected_pos: int) -> pd.DataFrame:
     """
@@ -107,8 +109,10 @@ def get_local_shap_values(_model, model_df: pd.DataFrame, selected_pos: int) -> 
 
 
 # =====================================================================
-# SECTION 2: INTERACTIVE LOCAL SHAP CHART BUILDER
+# SECTION 2: Build the per-applicant SHAP bar chart
 # =====================================================================
+# This section creates a horizontal Plotly bar chart showing each feature's
+# contribution to the model's decision for the selected applicant.
 
 def create_local_shap_bar_chart(explanation_df: pd.DataFrame, max_features: int = 10):
     """
@@ -154,8 +158,10 @@ def create_local_shap_bar_chart(explanation_df: pd.DataFrame, max_features: int 
 
 
 # =====================================================================
-# SECTION 3: GLOBAL SHAP PLOTTING INTERFACE UTILITY
+# SECTION 3: Build the global feature importance bar chart
 # =====================================================================
+# This section creates a Plotly bar chart showing the average influence of
+# each feature across all applicants in the dataset.
 
 def plot_global_feature_importance(global_importance_df: pd.DataFrame, top_n: int = 10):
     """
@@ -189,8 +195,10 @@ def plot_global_feature_importance(global_importance_df: pd.DataFrame, top_n: in
 
 
 # =====================================================================
-# SECTION 4: ADAPTIVE GLOBAL SHAP DATA COMPUTATION & CACHING
+# SECTION 4: Compute and cache global SHAP values for the full dataset
 # =====================================================================
+# This section runs SHAP across all applicants and caches the result so
+# the Model Insights page can display global feature importance without repeated computation.
 
 @st.cache_data
 def _compute_cached_global_shap_data(_model, model_df: pd.DataFrame):

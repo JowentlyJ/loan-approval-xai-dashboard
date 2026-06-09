@@ -20,14 +20,17 @@ from config import MODEL_DIR, OUTPUT_DIR, BEST_MODEL_PATH
 from preprocessing import load_clean_data, split_features_target, get_feature_columns
 
 # =====================================================================
-# SECTION 1: ADVANCED REGULATORY FAIRNESS AUDITING
+# SECTION 1: Calculate fairness metrics across demographic groups
 # =====================================================================
+# This section computes selection rates and approval rates by group to
+# check whether the model behaves consistently across different applicant groups.
 
 def audit_fairness_metrics(y_true: np.ndarray, y_pred: np.ndarray, sensitive_feature: pd.Series) -> dict:
     """
-    EXPLANATION SECTION: Computes compliance-standard risk adjustments.
-    Tracks Selection Rates, Disparate Impact (the 4/5ths rule), and 
-    Equal Opportunity metrics across sensitive cohorts (e.g., Gender).
+    Compute fairness metrics across demographic groups for a given model.
+
+    Calculates selection rates, disparate impact, and equal opportunity
+    differences across each group in sensitive_feature (e.g. Gender).
     """
     cohorts = sensitive_feature.dropna().unique()
     selection_rates = {}
@@ -62,14 +65,18 @@ def audit_fairness_metrics(y_true: np.ndarray, y_pred: np.ndarray, sensitive_fea
 
 
 # =====================================================================
-# SECTION 2: ROBUST CROSS-VALIDATION MODEL ORCHESTRATION
+# SECTION 2: Train and compare models using cross-validation
 # =====================================================================
+# This section runs 5-fold cross-validation across multiple classifiers,
+# saves the best-performing model to disk, and writes performance and fairness results.
 
 def run_production_training_pipeline(sensitive_column_name: str = "Gender"):
     """
-    EXPLANATION SECTION: Main execution block for model compilation.
-    Runs 5-Fold Cross-Validation, builds full performance summary tables, 
-    and prints out-of-fold detailed Classification Reports for deep audit analysis.
+    Train all candidate models, evaluate with cross-validation, and save the best pipeline.
+
+    Runs 5-fold cross-validation, prints per-model classification reports,
+    saves performance and fairness CSVs to the outputs directory, and saves
+    the best model pipeline to disk for use by the dashboard.
     """
     print(f"Starting Underwriting Model Training Pipeline: {datetime.now()}")
     
@@ -106,7 +113,7 @@ def run_production_training_pipeline(sensitive_column_name: str = "Gender"):
     
     performance_records = []
     fairness_records = []
-    detailed_reports = {}  # Injected to temporarily store out-of-fold reports in memory
+    detailed_reports = {}  # Collects per-model classification reports to print after all folds
     trained_pipelines = {}
 
     for model_name, classifier in candidate_models.items():
@@ -156,7 +163,7 @@ def run_production_training_pipeline(sensitive_column_name: str = "Gender"):
             "True_Positives": tp
         })
 
-        # INJECTED: Generate out-of-fold classification text reports for deep inspection
+        # Save the classification report for this model using out-of-fold predictions
         detailed_reports[model_name] = classification_report(
             y, oof_predictions, target_names=["Rejected (0)", "Approved (1)"]
         )
@@ -175,7 +182,7 @@ def run_production_training_pipeline(sensitive_column_name: str = "Gender"):
     print("\n" + "="*60 + "\nPRODUCTION PERFORMANCE SUMMARY (OOF CV)\n" + "="*60)
     print(summary_perf_df.to_string(index=False))
 
-    # INJECTED SECTION: Print complete, itemized Classification Reports for all classifiers
+    # Print per-model classification reports
     print("\n" + "="*60 + "\nDETAILED AUDIT REPORTS PER MODEL CANDIDATE (OOF CV)\n" + "="*60)
     for model_name, report_text in detailed_reports.items():
         print(f"\n▶ Model: {model_name}")

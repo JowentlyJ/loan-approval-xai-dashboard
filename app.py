@@ -27,13 +27,13 @@ import numpy as np
 
 from config import DATA_PATH, BEST_MODEL_PATH, OUTPUT_DIR
 
-# Frontend Page Component Routines
+# Page render functions for each dashboard section
 from ui.loan_decision_page import render_loan_decision_page
 from ui.model_insights_page import render_model_insights_page
 from ui.similar_cases_page import render_similar_cases_page
 from ui.counterfactual_page import render_counterfactual_page
 
-# Core Analytical Core Integration Blocks
+# Service functions for prediction, explanation, similarity, and counterfactuals
 from services.prediction import predict_applicant
 from services.assessment import render_underwriter_assessment_section
 from services.explainability import (
@@ -49,12 +49,14 @@ from services.similarity import (
     get_similar_cases_by_class,
 )
 
-# Administrative Configuration Controls
+# Path to the pre-generated global SHAP summary image
 GLOBAL_SHAP_IMAGE = os.path.join(OUTPUT_DIR, "global_shap_summary.png")
 
 # =====================================================================
-# SECTION 1: SYSTEM-WIDE PAGE FRAMEWORK INITIALIZATION
+# SECTION 1: Configure page layout and global CSS styles
 # =====================================================================
+# This section sets up the Streamlit page title, icon, and layout, and
+# applies custom CSS so the sidebar navigation buttons are styled as cards.
 
 st.set_page_config(
     page_title="Loan Approval XAI Dashboard",
@@ -106,8 +108,10 @@ section[data-testid="stSidebar"] .element-container:has(.stRadio) {
 """, unsafe_allow_html=True)
 
 # =====================================================================
-# SECTION 2: DEFENSIVE ASSET LOADING ENGINES
+# SECTION 2: Load dataset and trained model safely
 # =====================================================================
+# This section loads the project data and saved model files, handling
+# missing or invalid files so the dashboard does not crash on startup.
 
 @st.cache_resource
 def load_production_model():
@@ -180,7 +184,7 @@ def load_production_dataset() -> tuple:
         st.stop()
 
 
-# Run secure asset validation arrays
+# Load model and dataset into memory (cached after first run)
 model = load_production_model()
 display_df, model_df = load_production_dataset()
 
@@ -211,19 +215,22 @@ def compute_all_decisions(_model, _model_df):
 all_decisions = compute_all_decisions(model, model_df)
 
 # =====================================================================
-# SECTION 3: WORKFLOW STATE LIFECYCLE MANAGEMENT
+# SECTION 3: Set up session state for the selected applicant and page
 # =====================================================================
+# This section initialises session state variables so the selected applicant
+# and active page are remembered across Streamlit reruns.
 
-# EXPLANATION SECTION: Initialize the unified session state memory index.
-# This prevents selection reset loops when switching dashboard analytical windows.
+# These keys are set only on first run; Streamlit skips them on subsequent reruns.
 if "selected_applicant_index" not in st.session_state:
     st.session_state["selected_applicant_index"] = 0
 if "active_page" not in st.session_state:
     st.session_state["active_page"] = "Loan Decision Core"
 
 # =====================================================================
-# SECTION 4: GLOBAL SIDEBAR NAVIGATION LAYOUT
+# SECTION 4: Build the sidebar: search, filters, applicant dropdown, and navigation
 # =====================================================================
+# This section fills the sidebar with all interactive controls, then routes
+# to the correct page based on the selected navigation item.
 
 st.sidebar.title("Loan Approval XAI Dashboard")
 
@@ -507,7 +514,7 @@ elif page == "Macro Model Insights":
         plot_global_feature_importance
     )
     
-    # Custom dashboard mapping routine using memory subplots
+    # Load saved model comparison results and compute global SHAP importance
     def get_model_comparison_df():
         if os.path.exists(os.path.join(OUTPUT_DIR, "model_performance_cv.csv")):
             return pd.read_csv(os.path.join(OUTPUT_DIR, "model_performance_cv.csv"))

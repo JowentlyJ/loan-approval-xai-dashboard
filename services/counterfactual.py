@@ -39,8 +39,10 @@ CONTINUOUS_FEATURES = ["ApplicantIncome", "CoapplicantIncome", "LoanAmount", "Lo
 COUNTERFACTUAL_FEATURES_TO_VARY = ["ApplicantIncome", "CoapplicantIncome", "LoanAmount", "Loan_Amount_Term"]
 
 # =====================================================================
-# SECTION 1: GLOBAL RESOURCE CACHING LAYER
+# SECTION 1: Build and cache the DiCE counterfactual explainer
 # =====================================================================
+# This section constructs the DiCE search object once and caches it so that
+# repeated button clicks do not rebuild the explainer from scratch.
 
 @st.cache_resource
 def get_cached_dice_explainer(_model_df: pd.DataFrame, _model):
@@ -74,8 +76,10 @@ def get_cached_dice_explainer(_model_df: pd.DataFrame, _model):
 
 
 # =====================================================================
-# SECTION 2: COUNTERFACTUAL SCENARIO DISCOVERY ENGINE
+# SECTION 2: Generate DiCE counterfactuals for a rejected applicant
 # =====================================================================
+# This section uses DiCE to search for alternative applicant profiles
+# that the model would approve. It is retained but not the primary path.
 
 def build_empty_counterfactual_result(query_instance: pd.DataFrame, current_class: int, current_probability: float, current_decision: str) -> dict:
     """
@@ -95,7 +99,10 @@ def build_empty_counterfactual_result(query_instance: pd.DataFrame, current_clas
 
 
 def show_only_changed_features(query_instance: pd.DataFrame, cf_df: pd.DataFrame) -> pd.DataFrame:
-    """EXPLANATION SECTION: Isolates changed input fields to keep user review tables readable."""
+    """
+    Return a DataFrame showing only the features that changed between the original
+    and counterfactual profiles, keeping the review table concise.
+    """
     if cf_df.empty:
         return pd.DataFrame()
 
@@ -118,9 +125,10 @@ def show_only_changed_features(query_instance: pd.DataFrame, cf_df: pd.DataFrame
 
 def render_dice_explanation_plot(result: dict) -> go.Figure:
     """
-    EXPLANATION SECTION: Generates a 2D Cartesian decision frontier visualization
-    mapping the original applicant coordinate, decision zones, and optimized DiCE paths.
-    Matches a dark high-tech terminal design scheme.
+    Build a scatter plot showing the applicant's current position and alternative
+    approved profiles on axes of ApplicantIncome and LoanAmount.
+
+    Returns None if no counterfactuals are available.
     """
     if result is None or "counterfactuals" not in result or result["counterfactuals"].empty:
         return None
@@ -336,8 +344,10 @@ def generate_counterfactuals_for_approval(model, model_df: pd.DataFrame, selecte
 
 
 # =====================================================================
-# SECTION 3: DETERMINISTIC SCENARIO-BASED WHAT-IF GENERATOR
+# SECTION 3: Generate what-if scenarios by testing realistic single-feature changes
 # =====================================================================
+# This section is the primary path for counterfactual suggestions. It tests a
+# fixed set of realistic changes and returns those that improve the approval probability.
 
 def _clean_row(base_row: pd.DataFrame, model_df: pd.DataFrame) -> pd.DataFrame:
     """

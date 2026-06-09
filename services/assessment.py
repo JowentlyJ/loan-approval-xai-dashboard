@@ -16,11 +16,13 @@ ASSESSMENT_COLUMNS = [
 ]
 
 # =====================================================================
-# SECTION 1: CONCURRENCY-SAFE TRANSACTION LOGGER
+# SECTION 1: Load and save underwriter assessment records
 # =====================================================================
+# This section handles reading from and writing to the assessments CSV,
+# with a basic retry mechanism to handle simultaneous saves.
 
 def load_assessments() -> pd.DataFrame:
-    """EXPLANATION SECTION: Reads recorded evaluations safely from persistent storage."""
+    """Load all saved underwriter assessments from disk, or return an empty DataFrame."""
     if os.path.exists(ASSESSMENTS_PATH):
         try:
             return pd.read_csv(ASSESSMENTS_PATH)
@@ -32,8 +34,9 @@ def load_assessments() -> pd.DataFrame:
 
 def save_assessment_record(record: dict) -> None:
     """
-    EXPLANATION SECTION: Commits audit records with a retry mechanism to minimize multi-user collisions.
-    Replaces previous historical matching entries to keep the portfolio table clean.
+    Save a new assessment record to disk, replacing any existing record for the same applicant.
+
+    Retries up to three times if the file is temporarily locked during concurrent saves.
     """
     os.makedirs(OUTPUT_DIR, exist_ok=True)
     
@@ -54,7 +57,7 @@ def save_assessment_record(record: dict) -> None:
 
 
 def get_applicant_key(applicant_display: pd.Series) -> str:
-    """EXPLANATION SECTION: Assembles a unique identifier key using the Loan ID or dataframe index."""
+    """Build a unique string key for an applicant using their Loan ID or row index."""
     loan_id = applicant_display.get("Loan_ID", None)
     original_row = applicant_display.get("Original_Row", None)
     if pd.notna(loan_id):
@@ -63,7 +66,7 @@ def get_applicant_key(applicant_display: pd.Series) -> str:
 
 
 def get_existing_assessment(applicant_display: pd.Series):
-    """EXPLANATION SECTION: Pulls the latest saved assessment log dictionary for the applicant."""
+    """Return the most recent saved assessment for an applicant, or None if none exists."""
     assessments_df = load_assessments()
     if assessments_df.empty:
         return None
@@ -76,25 +79,29 @@ def get_existing_assessment(applicant_display: pd.Series):
 
 
 def safe_text(value, fallback: str = "") -> str:
-    """EXPLANATION SECTION: Defensive guard utility to prevent input rendering crashes from empty fields."""
+    """Return fallback if value is NaN, otherwise return value as a string."""
     return fallback if pd.isna(value) else str(value)
 
 
 def get_selectbox_index(options: list, selected_value: str, fallback: str) -> int:
-    """EXPLANATION SECTION: Resolves situational index coordinates for Streamlit UI dropdown widgets."""
+    """Return the index of selected_value in options, or the index of fallback if not found."""
     if selected_value in options:
         return options.index(selected_value)
     return options.index(fallback)
 
 
 # =====================================================================
-# SECTION 2: WIDGET FORM INTERFACE
+# SECTION 2: Render the underwriter assessment form
 # =====================================================================
+# This section displays the manual sign-off form where an underwriter can
+# record their decision, risk level, and notes for the selected applicant.
 
 def render_underwriter_assessment_section(applicant_display: pd.Series, probability: float, model_decision: str) -> None:
     """
-    EXPLANATION SECTION: Renders the active Human-in-the-Loop underwriting form.
-    Captures manual overrides, approval criteria, risk notes, and audit trails.
+    Render the underwriter assessment form for the selected applicant.
+
+    Loads any existing assessment for this applicant and pre-fills the form,
+    then saves the result when the underwriter submits.
     """
     st.subheader("Underwriter Assessment")
     existing = get_existing_assessment(applicant_display)

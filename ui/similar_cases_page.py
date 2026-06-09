@@ -70,9 +70,7 @@ def render_similar_cases_page(
     else:
         current_status_label = "Excluded from model data footprint"
 
-    # =====================================================================
-    # TOP LEVEL SIDE-BY-SIDE SIDEBAR COLUMNS
-    # =====================================================================
+    # ── Applicant details and top 10 overall similar cases ────────────────
     main_col1, main_col2 = st.columns(2)
 
     with main_col1:
@@ -101,9 +99,7 @@ def render_similar_cases_page(
         else:
             st.warning("Peer comparison calculations require fully valid baseline metrics profiles.")
 
-    # =====================================================================
-    # BOTTOM LEVEL APPROVED VS REJECTED SIDE-BY-SIDE GRID
-    # =====================================================================
+    # ── Top 10 similar approved and rejected cases side by side ───────────
     if global_idx in model_df.index:
         st.write("---")
         col1, col2 = st.columns(2)

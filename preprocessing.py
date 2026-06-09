@@ -35,8 +35,10 @@ NUMERICAL_FEATURES = [
 TARGET_COLUMN = "Loan_Status"
 
 # =====================================================================
-# SECTION 2: PRODUCTION-GRADE SANITIZATION AND INGESTION
+# SECTION 2: Load and clean the raw loan dataset
 # =====================================================================
+# This section reads the CSV, removes identifier columns, encodes the target
+# label, and imputes missing values in categorical columns.
 
 def load_clean_data() -> pd.DataFrame:
     """
@@ -71,11 +73,11 @@ def load_clean_data() -> pd.DataFrame:
         else:
             raise ValueError(f"Target Label Discrepancy: Unexpected entries found in {TARGET_COLUMN}: {valid_labels}")
     
-    # Isolate institutional loan keys from the statistical matrix variables
+    # Remove Loan_ID: it is an identifier, not a predictive feature
     if "Loan_ID" in df.columns:
         df = df.drop(columns=["Loan_ID"])
 
-    # Enforce static type configurations across categorical feature scopes
+    # Impute missing values and cast each categorical column to string
     for col in CATEGORICAL_FEATURES:
         if col in df.columns:
             # Impute empty values using the column's statistical mode to prevent string literal "nan" conversion bugs
@@ -84,12 +86,12 @@ def load_clean_data() -> pd.DataFrame:
                 df[col] = df[col].fillna(fallback_mode)
             df[col] = df[col].astype(str).str.strip()
 
-    # Enforce static type configurations across numerical feature scopes
+    # Cast each numeric column to float; NaN values are kept for the sklearn pipeline's imputer
     for col in NUMERICAL_FEATURES:
         if col in df.columns:
             df[col] = pd.to_numeric(df[col], errors="coerce")
             
-            # Defensive check: Log a warning text output if critical numeric metrics contain null elements
+            # NaN is kept intentionally here — the sklearn pipeline's SimpleImputer fills it during training
             if df[col].isnull().any():
                 # Numeric NaN values are left here intentionally.
                 # The sklearn Pipeline's SimpleImputer fills them during fit/transform,
@@ -100,8 +102,10 @@ def load_clean_data() -> pd.DataFrame:
     return df
 
 # =====================================================================
-# SECTION 3: MATRIX ISOLATION AND SPLITTING CHANNELS
+# SECTION 3: Split the dataset into features and target
 # =====================================================================
+# This section provides helper functions for separating the feature columns
+# from the target column before model training.
 
 def split_features_target(df: pd.DataFrame, target: str = TARGET_COLUMN) -> tuple:
     """
